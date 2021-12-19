@@ -96,7 +96,7 @@ defmodule ST7789 do
   """
   def display(self, image_data, convert)
   def display(self, image_data, true) when is_list(image_data) do
-    display(self, to_rgb565(image_data), false)
+    display(self, to_rgb565(image_data))
   end
   def display(self, image_data, false) when is_list(image_data) do
     self
@@ -109,6 +109,15 @@ defmodule ST7789 do
 
   defp to_rgb565(image_data) when is_list(image_data) do
     image_data
+      |> Enum.chunk_every(3)
+      |> Enum.map(fn [r,g,b] ->
+        bor(
+          bor(
+            bsl(band(r, 0xF8), 8),
+            bsl(band(g, 0xFC), 3)),
+            bsr(band(b, 0xF8), 3))
+        end)
+      |> Enum.into(<<>>, fn bit -> <<bit :: 16>> end)
   end
 
   defp init(self=%ST7789{opts: board}) do
