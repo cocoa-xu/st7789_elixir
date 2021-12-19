@@ -220,9 +220,7 @@ defmodule ST7789 do
 
   defp set_window(self=%ST7789{opts: board}, opts = [x0: 0, y0: 0, x1: nil, y2: nil]) do
     width = board[:width]
-    IO.inspect(width)
     height = board[:height]
-    IO.inspect(height)
     offset_top = board[:offset_top]
     offset_left = board[:offset_left]
     x0 = opts[:x0]
