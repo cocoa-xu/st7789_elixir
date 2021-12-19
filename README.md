@@ -1,6 +1,8 @@
-# St7789Elixir
+# ST7789-Elixir
 
-**TODO: Add description**
+ST7789 driver for Elixir.
+
+Tested on my 1.3" SPI Colour Square LCD (240x240) Breakout.
 
 ## Installation
 
