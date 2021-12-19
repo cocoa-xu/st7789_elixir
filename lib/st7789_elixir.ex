@@ -91,20 +91,29 @@ defmodule ST7789 do
   @doc """
   Write the provided image to the hardware.
 
-  - image_data: List: Should be RGB format and the same dimensions (width x height x 3) as the display hardware.
   - image_data: binary: Should be 16bit RGB565 format and the same dimensions (width x height x 3) as the display hardware.
+  - image_data: List: Should be 16bit RGB565 format and the same dimensions (width x height x 3) as the display hardware.
   """
-  def display(self, image_data, convert)
-  def display(self, image_data, true) when is_list(image_data) do
-    display(self, to_rgb565(image_data))
+  def display_565(self, image_data) when is_binary(image_data) do
+    display_565(self, :binary.bin_to_list(image_data))
   end
-  def display(self, image_data, false) when is_list(image_data) do
+  def display_565(self, image_data) when is_list(image_data) do
     self
       |> set_window(x0: 0, y0: 0, x1: nil, y2: nil)
       |> send(image_data, true, 4096)
   end
+
+  @doc """
+  Write the provided image to the hardware.
+
+  - image_data: List: Should be RGB888 format and the same dimensions (width x height x 3) as the display hardware.
+  - image_data: binary: Should be 24bit RGB888 format and the same dimensions (width x height x 3) as the display hardware.
+  """
+  def display(self, image_data) when is_list(image_data) do
+    display_565(self, to_rgb565(image_data))
+  end
   def display(self, image_data) when is_binary(image_data) do
-    display(self, :binary.bin_to_list(image_data), false)
+    display(self, :binary.bin_to_list(image_data))
   end
 
   defp to_rgb565(image_data) when is_list(image_data) do
@@ -118,6 +127,7 @@ defmodule ST7789 do
             bsr(band(b, 0xF8), 3))
         end)
       |> Enum.into(<<>>, fn bit -> <<bit :: 16>> end)
+      |> :binary.bin_to_list()
   end
 
   defp init(self=%ST7789{opts: board}) do
