@@ -25,9 +25,10 @@ defmodule ST7789 do
   dc = 9
   backlight = 19
   speed_hz = 80 * 1000 * 1000
-  ST7789.new(port, dc, backlight: backlight, speed_hz: speed_hz)
+  ST7789.new(port, dc: dc, backlight: backlight, speed_hz: speed_hz)
   """
-  def new(port, dc, opts \\ []) when port >= 0 and dc >= 0 do
+  def new(port, opts \\ []) when port >= 0 and dc >= 0 do
+    dc = opts[:dc]                    || 9
     cs = opts[:cs]                    || kBG_SPI_CS_FRONT()
     speed_hz = opts[:speed_hz]        || 400_0000
     invert = opts[:invert]            || true
@@ -57,6 +58,7 @@ defmodule ST7789 do
         rst:       gpio_rst
       ],
       opts: [
+        dc: dc,
         cs: cs,
         speed_hz: speed_hz,
         invert: invert,
