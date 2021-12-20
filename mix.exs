@@ -10,6 +10,7 @@ defmodule St7789Elixir.MixProject do
       description: description(),
       package: package(),
       deps: deps(),
+      docs: docs(),
       source_url: "https://github.com/cocoa-xu/st7789_elixir"
     ]
   end
@@ -28,6 +29,15 @@ defmodule St7789Elixir.MixProject do
 
   defp description() do
     "ST7789 Elixir driver"
+  end
+
+  defp docs() do
+    [
+      groups_for_functions: [
+        API: & &1[:functions] == :exported,
+        Constants: & &1[:functions] == :constants
+      ]
+    ]
   end
 
   defp package() do

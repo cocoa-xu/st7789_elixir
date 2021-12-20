@@ -1,32 +1,65 @@
 defmodule ST7789 do
-  @moduledoc false
+  @moduledoc """
+  ST7789 Elixir driver
+  """
 
   use Bitwise
 
-  @enforce_keys [:spi, :gpio]
+  @enforce_keys [:spi, :gpio, :opts]
   defstruct [:spi, :gpio, :opts]
 
   @doc """
   New connection to an ST7789
 
   - **port**: SPI port number
-  - **cs**: SPI chip-select number (0 or 1 for BCM
+  - **cs**: SPI chip-select number (0 or 1 for BCM).
+
+    Default value: `kBG_SPI_CS_FRONT`.
+
   - **backlight**: Pin for controlling backlight
+
+    Default value: `nil`.
+
   - **rst**: Reset pin for ST7789
+
+    Default value: `nil`.
+
   - **width**: Width of display connected to ST7789
+
+    Default value: `240`.
+
   - **height**: Height of display connected to ST7789
+
+    Default value: `240`.
+
   - **offset_top**: Offset to top row
+
+    Default value: `0`.
+
   - **offset_left**: Offset to left column
+
+    Default value: `0`.
+
   - **invert**: Invert display
+
+    Default value: `true`.
+
   - **speed_hz**: SPI speed (in Hz)
 
+    Default value: `400_0000`.
+
+  **return**: `%ST7789{}`
+
   ## Example
+  ```elixir
   port = 0
   dc = 9
   backlight = 19
   speed_hz = 80 * 1000 * 1000
-  ST7789.new(port, dc: dc, backlight: backlight, speed_hz: speed_hz)
+  disp = ST7789.new(port, dc: dc, backlight: backlight, speed_hz: speed_hz)
+  ```
   """
+  @doc functions: :exported
   def new(port, opts \\ []) when port >= 0 do
     dc = opts[:dc]                    || 9
     cs = opts[:cs]                    || kBG_SPI_CS_FRONT()
@@ -76,7 +109,12 @@ defmodule ST7789 do
 
   @doc """
   Reset the display, if reset pin is connected.
+
+  - **self**: `%ST7789{}`
+
+  **return**: `self`
   """
+  @doc functions: :exported
   def reset(self=%ST7789{gpio: gpio}) do
     gpio_rst = gpio[:rst]
     if gpio_rst != nil do
@@ -91,11 +129,14 @@ defmodule ST7789 do
   end
 
   @doc """
-  Write the provided image to the hardware.
+  Write the provided 16bit RGB565 image to the hardware.
 
-  - image_data: binary: Should be 16bit RGB565 format and the same dimensions (width x height x 3) as the display hardware.
-  - image_data: List: Should be 16bit RGB565 format and the same dimensions (width x height x 3) as the display hardware.
+  - **self**: `%ST7789{}`
+  - **image_data**: Should be 16bit RGB565 format and the same dimensions (width x height x 3) as the display hardware.
+
+  **return**: `self`
   """
+  @doc functions: :exported
   def display_565(self, image_data) when is_binary(image_data) do
     display_565(self, :binary.bin_to_list(image_data))
   end
@@ -106,16 +147,95 @@ defmodule ST7789 do
   end
 
   @doc """
-  Write the provided image to the hardware.
+  Write the provided 24bit RGB888 image to the hardware.
 
-  - image_data: List: Should be RGB888 format and the same dimensions (width x height x 3) as the display hardware.
-  - image_data: binary: Should be 24bit RGB888 format and the same dimensions (width x height x 3) as the display hardware.
+  - **self**: `%ST7789{}`
+  - **image_data**: Should be 24bit RGB888 format and the same dimensions (width x height x 3) as the display hardware.
+
+  **return**: `self`
   """
+  @doc functions: :exported
   def display(self, image_data) when is_list(image_data) do
     display_565(self, to_rgb565(image_data))
   end
   def display(self, image_data) when is_binary(image_data) do
     display(self, :binary.bin_to_list(image_data))
+  end
+
+  @doc """
+  Write a byte to the display as command data.
+
+  - **self**: `%ST7789{}`
+  - **cmd**: command data
+
+  **return**: `self`
+  """
+  @doc functions: :exported
+  def command(self, cmd) when is_integer(cmd) do
+    send(self, cmd, false)
+  end
+
+  @doc """
+  Write a byte or array of bytes to the display as display data.
+
+  - **self**: `%ST7789{}`
+  - **data**: display data
+
+  **return**: `self`
+  """
+  @doc functions: :exported
+  def data(self, data) do
+    send(self, data, true)
+  end
+
+  @doc """
+  Send bytes to the ST7789
+
+  - **self**: `%ST7789{}`
+  - **bytes**: The bytes to be sent to `self`
+
+    - `when is_integer(bytes)`,
+      `sent` will take the 8 least-significant bits `[band(bytes, 0xFF)]`
+      and send it to `self`
+    - `when is_list(bytes)`, `bytes` will be casting to bitstring and then sent
+      to `self`
+
+  - **is_data**:
+
+    - `true`: `bytes` will be sent as data
+    - `false`: `bytes` will be sent as commands
+
+  - **chunk_size**: Indicates how many bytes will be send in a single write call
+
+  **return**: `self`
+  """
+  @doc functions: :exported
+  def send(self, bytes, is_data, chunk_size \\ 4096)
+  def send(self=%ST7789{}, bytes, true, chunk_size) do
+    send(self, bytes, 1, chunk_size)
+  end
+  def send(self=%ST7789{}, bytes, false, chunk_size) do
+    send(self, bytes, 0, chunk_size)
+  end
+  def send(self=%ST7789{}, bytes, is_data, chunk_size)
+  when (is_data == 0 or is_data == 1) and is_integer(bytes) do
+    send(self, [Bitwise.band(bytes, 0xFF)], is_data, chunk_size)
+  end
+  def send(self=%ST7789{gpio: gpio, spi: spi}, bytes, is_data, chunk_size)
+  when (is_data == 0 or is_data == 1) and is_list(bytes) do
+    gpio_dc = gpio[:dc]
+    if gpio_dc != nil do
+      Circuits.GPIO.write(gpio_dc, is_data)
+      for xfdata <-
+        bytes
+        |> Enum.chunk_every(chunk_size)
+        |> Enum.map(& Enum.into(&1, <<>>, fn bit -> <<bit :: 8>> end)) do
+          {:ok, _ret} = Circuits.SPI.transfer(spi, xfdata)
+      end
+      self
+    else
+      {:error, "gpio[:dc] is nil"}
+    end
   end
 
   defp to_rgb565(image_data) when is_list(image_data) do
@@ -260,73 +380,57 @@ defmodule ST7789 do
       |> command(kRAMWR())
   end
 
-  defp command(self, cmd) when is_integer(cmd) do
-    # Write a byte or array of bytes to the display as command data.
-    send(self, cmd, false)
-  end
-
-  defp data(self, data) do
-    # Write a byte or array of bytes to the display as display data.
-    send(self, data, true)
-  end
-
-  defp send(self, data, is_data, chunk_size \\ 4096)
-  defp send(self, data, true, chunk_size) do
-    send(self, data, 1, chunk_size)
-  end
-  defp send(self, data, false, chunk_size) do
-    send(self, data, 0, chunk_size)
-  end
-  defp send(self, data, is_data, chunk_size)
-  when (is_data == 0 or is_data == 1) and is_integer(data) do
-    send(self, [Bitwise.band(data, 0xFF)], is_data, chunk_size)
-  end
-  defp send(self=%ST7789{gpio: gpio, spi: spi}, data, is_data, chunk_size)
-  when (is_data == 0 or is_data == 1) and is_list(data) do
-    gpio_dc = gpio[:dc]
-    if gpio_dc != nil do
-      Circuits.GPIO.write(gpio_dc, is_data)
-      for xfdata <-
-        data
-        |> Enum.chunk_every(chunk_size)
-        |> Enum.map(& Enum.into(&1, <<>>, fn bit -> <<bit :: 8>> end)) do
-          {:ok, _ret} = Circuits.SPI.transfer(spi, xfdata)
-      end
-      self
-    else
-      {:error, "gpio[:dc] is nil"}
-    end
-  end
-
+  @doc functions: :constants
   def kBG_SPI_CS_BACK,  do: 0
+  @doc functions: :constants
   def kBG_SPI_CS_FRONT, do: 1
 
+  @doc functions: :constants
   def kSWRESET,         do: 0x01
 
+  @doc functions: :constants
   def kSLPOUT,          do: 0x11
 
+  @doc functions: :constants
   def kINVOFF,          do: 0x20
+  @doc functions: :constants
   def kINVON,           do: 0x21
+  @doc functions: :constants
   def kDISPON,          do: 0x29
 
+  @doc functions: :constants
   def kCASET,           do: 0x2A
+  @doc functions: :constants
   def kRASET,           do: 0x2B
+  @doc functions: :constants
   def kRAMWR,           do: 0x2C
 
+  @doc functions: :constants
   def kMADCTL,          do: 0x36
+  @doc functions: :constants
   def kCOLMOD,          do: 0x3A
 
+  @doc functions: :constants
   def kFRMCTR2,         do: 0xB2
 
+  @doc functions: :constants
   def kGCTRL,           do: 0xB7
+  @doc functions: :constants
   def kVCOMS,           do: 0xBB
 
+  @doc functions: :constants
   def kLCMCTRL,         do: 0xC0
+  @doc functions: :constants
   def kVDVVRHEN,        do: 0xC2
+  @doc functions: :constants
   def kVRHS,            do: 0xC3
+  @doc functions: :constants
   def kVDVS,            do: 0xC4
+  @doc functions: :constants
   def kFRCTRL2,         do: 0xC6
 
+  @doc functions: :constants
   def kGMCTRP1,         do: 0xE0
+  @doc functions: :constants
   def kGMCTRN1,         do: 0xE1
 end
