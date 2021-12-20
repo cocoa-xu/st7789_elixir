@@ -33,8 +33,7 @@ defmodule St7789Elixir.MixProject do
   defp package() do
     [
       name: "st7789_elixir",
-      files: ~w(lib .formatter.exs mix.exs README* readme* LICENSE*
-                license* CHANGELOG* changelog*),
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE*),
       licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/cocoa-xu/st7789_elixir"}
     ]
