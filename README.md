@@ -51,8 +51,7 @@ ST7789.display(disp, image_data)
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `st7789_elixir` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `st7789_elixir` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
