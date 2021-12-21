@@ -7,24 +7,30 @@ Tested on my 1.3" SPI Colour Square LCD (240x240) Breakout.
 ## Example
 ### PIN connection
 
-| ST7789 | Raspberry Pi       | Variable      |
-|--------|--------------------|---------------|
-| 3-5V   | Any 5V or 3.3V PIN | N/A           |
-| CS     | BCM 7 / BCM 8      | cs: 1 / cs: 0 |
-| SCK    | BCM 11             | N/A           |
-| MOSI   | BCM 10             | N/A           |
-| DC     | BCM 9              | dc: 9         |
-| BL     | BCM 19             | backlight: 19 |
-| GND    | Any ground PIN     | N/A           |
+| ST7789 | Raspberry Pi       | Variable      | Description |
+|--------|--------------------|---------------|-------------|
+| 3-5V   | Any 5V or 3.3V PIN | N/A           | VCC         |
+| CS     | BCM 8 / BCM 7      | cs: 0 / cs: 1 | CE 0 / CE 1 |
+| SCK    | BCM 11             | N/A           | SCLK        |
+| MOSI   | BCM 10             | N/A           | MOSI        |
+| DC     | BCM 9              | dc: 9         | MISO        |
+| BL     | BCM 17 / BCM 27    | backlight: 17 / backlight: 27 | Backlight |
+| GND    | Any ground PIN     | N/A           | Ground      |
 
 ### Code
 ```elixir
 # init ST7789 screen
-port = 0
-dc = 9
-backlight = 19
-speed_hz = 80 * 1000 * 1000
-disp = ST7789.new(port, dc: dc, backlight: backlight, speed_hz: speed_hz)
+port = 0                        # spi bus 0
+speed_hz = 80 * 1000 * 1000     # 80MHz
+dc = 9                          # MISO PIN 9
+
+# first display
+cs1 = 0                         # BCM 8 / CE 0 
+disp1 = ST7789.new(port, cs: cs1, dc: dc, speed_hz: speed_hz)
+
+# second display
+cs2 = 1                         # BCM 7 / CE 1
+disp2 = ST7789.new(port, cs: cs2, dc: dc, speed_hz: speed_hz)
 
 # read image from file
 {:ok, mat} = OpenCV.imread("/path/to/some/image")
@@ -33,7 +39,8 @@ disp = ST7789.new(port, dc: dc, backlight: backlight, speed_hz: speed_hz)
 # to binary
 {:ok, image_data} = OpenCV.Mat.to_binary(mat)
 # display it
-ST7789.display(disp, image_data)
+ST7789.display(disp1, image_data)
+ST7789.display(disp2, image_data)
 
 # open video stream
 {:ok, cap} = OpenCV.VideoCapture.videocapture(0)
@@ -46,7 +53,8 @@ ST7789.display(disp, image_data)
 # to binary
 {:ok, image_data} = OpenCV.Mat.to_binary(mat)
 # display it
-ST7789.display(disp, image_data)
+ST7789.display(disp1, image_data)
+ST7789.display(disp2, image_data)
 ```
 
 ## Installation
