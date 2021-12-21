@@ -163,6 +163,30 @@ defmodule ST7789 do
   end
 
   @doc """
+  Set backlight status
+
+  - **self**: `%ST7789{}`
+  - **status**: either `:on` or `:off`
+
+  **return**: `self`
+  """
+  @doc functions: :exported
+  def set_backlight(self=%ST7789{gpio: gpio}, :on) do
+    backlight = gpio[:backlight]
+    if backlight != nil do
+      Circuits.GPIO.write(backlight, 1)
+    end
+    self
+  end
+  def set_backlight(self=%ST7789{gpio: gpio}, :off) do
+    backlight = gpio[:backlight]
+    if backlight != nil do
+      Circuits.GPIO.write(backlight, 0)
+    end
+    self
+  end
+
+  @doc """
   Write a byte to the display as command data.
 
   - **self**: `%ST7789{}`
