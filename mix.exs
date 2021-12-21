@@ -7,6 +7,8 @@ defmodule St7789Elixir.MixProject do
       version: "0.1.1",
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
+      compilers: [:elixir_make] ++ Mix.compilers(),
+      elixirc_paths: elixirc_paths(Mix.env()),
       description: description(),
       package: package(),
       deps: deps(),
@@ -23,6 +25,7 @@ defmodule St7789Elixir.MixProject do
     [
       {:circuits_gpio, "~> 0.4"},
       {:circuits_spi, "~> 0.1"},
+      {:elixir_make, "~> 0.6"},
       {:ex_doc, "~> 0.14", only: :dev, runtime: false}
     ]
   end
@@ -30,6 +33,8 @@ defmodule St7789Elixir.MixProject do
   defp description() do
     "ST7789 Elixir driver"
   end
+
+  defp elixirc_paths(_), do: ~w(lib)
 
   defp docs() do
     [

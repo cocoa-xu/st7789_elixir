@@ -154,29 +154,32 @@ defmodule ST7789 do
   **return**: `self`
   """
   @doc functions: :exported
-  def display_565(self, image_data) when is_binary(image_data) do
-    display_565(self, :binary.bin_to_list(image_data))
+  def display_rgb565(self, image_data) when is_binary(image_data) do
+    display_rgb565(self, :binary.bin_to_list(image_data))
   end
-  def display_565(self, image_data) when is_list(image_data) do
+  def display_rgb565(self, image_data) when is_list(image_data) do
     self
       |> set_window(x0: 0, y0: 0, x1: nil, y2: nil)
       |> send(image_data, true, 4096)
   end
 
   @doc """
-  Write the provided 24bit RGB888 image to the hardware.
+  Write the provided 24bit BGR888/RGB888 image to the hardware.
 
   - **self**: `%ST7789{}`
-  - **image_data**: Should be 24bit RGB888 format and the same dimensions (width x height x 3) as the display hardware.
+  - **image_data**: Should be 24bit BGR888/RGB888 format and the same dimensions (width x height x 3) as the display hardware.
+  - **color_space**: either `:rgb` or `:bgr`
 
   **return**: `self`
   """
   @doc functions: :exported
-  def display(self, image_data) when is_list(image_data) do
-    display_565(self, to_rgb565(image_data))
+  def display(self, image_data, colorspace)
+  when is_binary(image_data) and (colorspace == :rgb or colorspace == :bgr) do
+    display_rgb565(self, to_rgb565(image_data, colorspace))
   end
-  def display(self, image_data) when is_binary(image_data) do
-    display(self, :binary.bin_to_list(image_data))
+  def display(self, image_data, colorspace)
+  when is_list(image_data) and (colorspace == :rgb or colorspace == :bgr) do
+    display(self, Enum.map(image_data, & Enum.into(&1, <<>>, fn bit -> <<bit :: 8>> end)), colorspace)
   end
 
   @doc """
@@ -201,6 +204,17 @@ defmodule ST7789 do
       Circuits.GPIO.write(backlight, 0)
     end
     self
+  end
+
+  @doc """
+  Get screen size
+
+  - **self**: `%ST7789{}`
+
+  **return**: `%{height: height, width: width}`
+  """
+  def size(%ST7789{opts: opts}) do
+    %{height: opts[:height], width: opts[:width]}
   end
 
   @doc """
@@ -279,18 +293,25 @@ defmodule ST7789 do
     end
   end
 
-  defp to_rgb565(image_data) when is_list(image_data) do
+  defp to_rgb565(image_data, colorspace)
+  when is_binary(image_data) and (colorspace == :rgb or colorspace == :bgr) do
     image_data
-      |> Enum.chunk_every(3)
-      |> Enum.map(fn [r,g,b] ->
-        bor(
-          bor(
-            bsl(band(r, 0xF8), 8),
-            bsl(band(g, 0xFC), 3)),
-            bsr(band(b, 0xF8), 3))
-        end)
-      |> Enum.into(<<>>, fn bit -> <<bit :: 16>> end)
+      |> :st7789_nif.to_rgb565(colorspace)
       |> :binary.bin_to_list()
+
+    # elixir implementation is slower
+    # image_data
+    #  |> :binary.bin_to_list()
+    #  |> Enum.chunk_every(3)
+    #  |> Enum.map(fn [b,g,r] ->
+    #    bor(
+    #      bor(
+    #        bsl(band(r, 0xF8), 8),
+    #        bsl(band(g, 0xFC), 3)),
+    #      bsr(band(b, 0xF8), 3))
+    #  end)
+    #  |> Enum.into(<<>>, fn bit -> <<bit :: 16>> end)
+    #  |> :binary.bin_to_list()
   end
 
   defp init(self=%ST7789{opts: board}) do
