@@ -12,9 +12,12 @@ defmodule ST7789 do
   New connection to an ST7789
 
   - **port**: SPI port number
+
+    Default value: `0`
+
   - **cs**: SPI chip-select number (0 or 1 for BCM).
 
-    Default value: `kBG_SPI_CS_FRONT`.
+    Default value: `0`.
 
   - **backlight**: Pin for controlling backlight
 
@@ -52,18 +55,31 @@ defmodule ST7789 do
 
   ## Example
   ```elixir
-  port = 0
-  dc = 9
-  backlight = 19
-  speed_hz = 80 * 1000 * 1000
-  disp = ST7789.new(port, dc: dc, backlight: backlight, speed_hz: speed_hz)
+  # default
+  # assuming device at /dev/spidev0.0
+  # DC connects to BCM 9
+  # BL not connected
+  # RST not connected
+  # SPI speed: 4MHz
+  disp = ST7789.new()
+  ```
+
+  ```elixir
+  # specify init arguments
+  port = 0                      # spi bus 0
+  cs = 0                        # BCM 8 / CE 0
+  dc = 9                        # BCM 9
+  backlight = 17                # BCM 17
+  speed_hz = 80 * 1000 * 1000   # 80MHz
+  disp = ST7789.new(port: port, cs: cs, dc: dc, backlight: backlight, speed_hz: speed_hz)
   ```
   """
   @doc functions: :exported
-  def new(port, opts \\ []) when port >= 0 do
+  def new(opts \\ []) do
+    port = opts[:port]                || 0
+    cs = opts[:cs]                    || 0
     dc = opts[:dc]                    || 9
-    cs = opts[:cs]                    || kBG_SPI_CS_FRONT()
-    speed_hz = opts[:speed_hz]        || 400_0000
+    speed_hz = opts[:speed_hz]        || 4_000_000
     invert = opts[:invert]            || true
     width = opts[:width]              || 240
     height = opts[:height]            || 240
@@ -91,8 +107,9 @@ defmodule ST7789 do
         rst:       gpio_rst
       ],
       opts: [
-        dc: dc,
+        port: port,
         cs: cs,
+        dc: dc,
         speed_hz: speed_hz,
         invert: invert,
         width: width,
@@ -403,11 +420,6 @@ defmodule ST7789 do
       |> data(band(y1, 0xFF))
       |> command(kRAMWR())
   end
-
-  @doc functions: :constants
-  def kBG_SPI_CS_BACK,  do: 0
-  @doc functions: :constants
-  def kBG_SPI_CS_FRONT, do: 1
 
   @doc functions: :constants
   def kSWRESET,         do: 0x01
