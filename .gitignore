@@ -26,3 +26,5 @@ st7789_elixir-*.tar
 /tmp/
 
 .DS_Store
+.idea/
+

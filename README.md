@@ -36,27 +36,27 @@ disp2 = ST7789.new(port, cs: cs2, backlight: backlight2, dc: dc, speed_hz: speed
 
 # read image from file
 {:ok, mat} = OpenCV.imread("/path/to/some/image")
-# convert to rgb888 colorspace
-{:ok, mat} = OpenCV.cvtcolor(mat, OpenCV.cv_color_bgr2rgb)
 # to binary
 {:ok, image_data} = OpenCV.Mat.to_binary(mat)
 # display it
-ST7789.display(disp1, image_data)
-ST7789.display(disp2, image_data)
+ST7789.display(disp1, image_data, :bgr)
+# (optional, for demo only) convert to rgb888 colorspace
+{:ok, mat} = OpenCV.cvtcolor(mat, OpenCV.cv_color_bgr2rgb)
+{:ok, image_data} = OpenCV.Mat.to_binary(mat)
+ST7789.display(disp2, image_data, :rgb)
 
 # open video stream
 {:ok, cap} = OpenCV.VideoCapture.videocapture(0)
 # read a frame
 {:ok, mat} = OpenCV.VideoCapture.read(cap)
-# convert to rgb888 colorspace
-{:ok, mat} = OpenCV.cvtcolor(mat, OpenCV.cv_color_bgr2rgb)
-# resize to 240x240
-{:ok, mat} = OpenCV.resize(mat, [240, 240])
+%{height: h, width: w} = ST7789.size(disp1)
+# resize
+{:ok, mat} = OpenCV.resize(mat, [h, w])
 # to binary
 {:ok, image_data} = OpenCV.Mat.to_binary(mat)
 # display it
-ST7789.display(disp1, image_data)
-ST7789.display(disp2, image_data)
+ST7789.display(disp1, image_data, :bgr)
+ST7789.display(disp2, image_data, :bgr)
 
 # turn off/on backlight
 ST7789.set_backlight(disp1, :off)
@@ -72,7 +72,7 @@ The package can be installed by adding `st7789_elixir` to your list of dependenc
 ```elixir
 def deps do
   [
-    {:st7789_elixir, "~> 0.1.1"}
+    {:st7789_elixir, "~> 0.1.2"}
   ]
 end
 ```
