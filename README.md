@@ -25,12 +25,14 @@ speed_hz = 80 * 1000 * 1000     # 80MHz
 dc = 9                          # MISO PIN 9
 
 # first display
-cs1 = 0                         # BCM 8 / CE 0 
-disp1 = ST7789.new(port, cs: cs1, dc: dc, speed_hz: speed_hz)
+cs1 = 0                         # BCM 8 / CE 0
+backlight1 = 17                 # BCM 17
+disp1 = ST7789.new(port, cs: cs1, backlight: backlight1, dc: dc, speed_hz: speed_hz)
 
 # second display
 cs2 = 1                         # BCM 7 / CE 1
-disp2 = ST7789.new(port, cs: cs2, dc: dc, speed_hz: speed_hz)
+backlight2 = 27                 # BCM 27
+disp2 = ST7789.new(port, cs: cs2, backlight: backlight2, dc: dc, speed_hz: speed_hz)
 
 # read image from file
 {:ok, mat} = OpenCV.imread("/path/to/some/image")
@@ -55,6 +57,12 @@ ST7789.display(disp2, image_data)
 # display it
 ST7789.display(disp1, image_data)
 ST7789.display(disp2, image_data)
+
+# turn off/on backlight
+ST7789.set_backlight(disp1, :off)
+ST7789.set_backlight(disp1, :on)
+ST7789.set_backlight(disp2, :off)
+ST7789.set_backlight(disp2, :on)
 ```
 
 ## Installation
