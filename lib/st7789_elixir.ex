@@ -172,18 +172,18 @@ defmodule ST7789 do
 
   - **self**: `%ST7789{}`
   - **image_data**: Should be 24bit BGR888/RGB888 format and the same dimensions (width x height x 3) as the display hardware.
-  - **color_space**: either `:rgb` or `:bgr`
+  - **channel_order**: either `:rgb` or `:bgr`
 
   **return**: `self`
   """
   @doc functions: :exported
-  def display(self, image_data, colorspace)
-  when is_binary(image_data) and (colorspace == :rgb or colorspace == :bgr) do
-    display_rgb565(self, to_rgb565(image_data, colorspace))
+  def display(self, image_data, channel_order)
+  when is_binary(image_data) and (channel_order == :rgb or channel_order == :bgr) do
+    display_rgb565(self, to_rgb565(image_data, channel_order))
   end
-  def display(self, image_data, colorspace)
-  when is_list(image_data) and (colorspace == :rgb or colorspace == :bgr) do
-    display(self, Enum.map(image_data, & Enum.into(&1, <<>>, fn bit -> <<bit :: 8>> end)), colorspace)
+  def display(self, image_data, channel_order)
+  when is_list(image_data) and (channel_order == :rgb or channel_order == :bgr) do
+    display(self, Enum.map(image_data, & Enum.into(&1, <<>>, fn bit -> <<bit :: 8>> end)), channel_order)
   end
 
   @doc """
@@ -298,10 +298,10 @@ defmodule ST7789 do
     end
   end
 
-  defp to_rgb565(image_data, colorspace)
-  when is_binary(image_data) and (colorspace == :rgb or colorspace == :bgr) do
+  defp to_rgb565(image_data, channel_order)
+  when is_binary(image_data) and (channel_order == :rgb or channel_order == :bgr) do
     image_data
-      |> :st7789_nif.to_rgb565(colorspace)
+      |> :st7789_nif.to_565(channel_order, :rgb)   # ST7789 always uses RGB565 format
       |> :binary.bin_to_list()
 
     # elixir implementation is slower
