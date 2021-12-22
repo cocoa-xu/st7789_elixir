@@ -217,6 +217,7 @@ defmodule ST7789 do
 
   **return**: `%{height: height, width: width}`
   """
+  @doc functions: :exported
   def size(%ST7789{opts: opts}) do
     %{height: opts[:height], width: opts[:width]}
   end
