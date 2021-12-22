@@ -19,6 +19,10 @@ defmodule ST7789 do
 
     Default value: `0`.
 
+  - **dc**: Command/data register selection
+
+    Default value: `9`.
+
   - **backlight**: Pin for controlling backlight
 
     Default value: `nil`.
