@@ -11,5 +11,5 @@ defmodule :st7789_nif do
     end
   end
 
-  def to_rgb565(_image_data, _colorspace), do: :erlang.nif_error(:not_loaded)
+  def to_565(_image_data, _channel_order_source, _channel_order_target), do: :erlang.nif_error(:not_loaded)
 end
