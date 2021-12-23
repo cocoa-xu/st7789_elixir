@@ -179,7 +179,11 @@ defmodule ST7789 do
   @doc functions: :exported
   def display(self, image_data, channel_order)
   when is_binary(image_data) and (channel_order == :rgb or channel_order == :bgr) do
-    display_rgb565(self, to_rgb565(image_data, channel_order))
+    display_rgb565(self,
+      image_data
+      |> CvtColor.cvt(String.to_atom("#{Atom.to_string(channel_order)}888"), :rgb565)
+      |> :binary.bin_to_list()
+    )
   end
   def display(self, image_data, channel_order)
   when is_list(image_data) and (channel_order == :rgb or channel_order == :bgr) do
@@ -296,27 +300,6 @@ defmodule ST7789 do
     else
       {:error, "gpio[:dc] is nil"}
     end
-  end
-
-  defp to_rgb565(image_data, channel_order)
-  when is_binary(image_data) and (channel_order == :rgb or channel_order == :bgr) do
-    image_data
-      |> :st7789_nif.to_565(channel_order, :rgb)   # ST7789 always uses RGB565 format
-      |> :binary.bin_to_list()
-
-    # elixir implementation is slower
-    # image_data
-    #  |> :binary.bin_to_list()
-    #  |> Enum.chunk_every(3)
-    #  |> Enum.map(fn [b,g,r] ->
-    #    bor(
-    #      bor(
-    #        bsl(band(r, 0xF8), 8),
-    #        bsl(band(g, 0xFC), 3)),
-    #      bsr(band(b, 0xF8), 3))
-    #  end)
-    #  |> Enum.into(<<>>, fn bit -> <<bit :: 16>> end)
-    #  |> :binary.bin_to_list()
   end
 
   defp init(self=%ST7789{opts: board}) do

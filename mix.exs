@@ -7,7 +7,6 @@ defmodule St7789Elixir.MixProject do
       version: "0.1.2",
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
-      compilers: [:elixir_make] ++ Mix.compilers(),
       elixirc_paths: elixirc_paths(Mix.env()),
       description: description(),
       package: package(),
@@ -23,9 +22,9 @@ defmodule St7789Elixir.MixProject do
 
   defp deps do
     [
+      {:cvt_color, "~> 0.1.0-dev", github: "cocoa-xu/cvt_color"},
       {:circuits_gpio, "~> 0.4"},
       {:circuits_spi, "~> 0.1"},
-      {:elixir_make, "~> 0.6"},
       {:ex_doc, "~> 0.14", only: :dev, runtime: false}
     ]
   end
