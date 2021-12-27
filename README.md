@@ -72,7 +72,7 @@ The package can be installed by adding `st7789_elixir` to your list of dependenc
 ```elixir
 def deps do
   [
-    {:st7789_elixir, "~> 0.1.2"}
+    {:st7789_elixir, "~> 0.1.3"}
   ]
 end
 ```
