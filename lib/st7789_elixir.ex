@@ -252,6 +252,27 @@ defmodule ST7789 do
     send(self, data, true)
   end
 
+  defp chunk_binary(binary, chunk_size) when is_binary(binary) do
+    total_bytes = byte_size(binary)
+    full_chunks = div(total_bytes, chunk_size)
+    chunks =
+      if full_chunks > 0 do
+        for i <- 0..(full_chunks-1), reduce: [] do
+          acc -> [:binary.part(binary, chunk_size * i, chunk_size) | acc]
+        end
+      else
+        []
+      end
+    remaining = rem(total_bytes, chunk_size)
+    chunks =
+      if remaining > 0 do
+        [:binary.part(binary, chunk_size * full_chunks, remaining) | chunks]
+      else
+        chunks
+      end
+    Enum.reverse(chunks)
+  end
+
   @doc """
   Send bytes to the ST7789
 
@@ -285,15 +306,17 @@ defmodule ST7789 do
   when (is_data == 0 or is_data == 1) and is_integer(bytes) do
     send(self, [Bitwise.band(bytes, 0xFF)], is_data, chunk_size)
   end
+  def send(self=%ST7789{}, bytes, is_data, chunk_size)
+      when (is_data == 0 or is_data == 1) and is_list(bytes) do
+    send(self, IO.iodata_to_binary(bytes), is_data, chunk_size)
+  end
+
   def send(self=%ST7789{gpio: gpio, spi: spi}, bytes, is_data, chunk_size)
-  when (is_data == 0 or is_data == 1) and is_list(bytes) do
+  when (is_data == 0 or is_data == 1) and is_binary(bytes) do
     gpio_dc = gpio[:dc]
     if gpio_dc != nil do
       Circuits.GPIO.write(gpio_dc, is_data)
-      for xfdata <-
-        bytes
-        |> Enum.chunk_every(chunk_size)
-        |> Enum.map(& Enum.into(&1, <<>>, fn bit -> <<bit :: 8>> end)) do
+      for xfdata <- chunk_binary(bytes, chunk_size) do
           {:ok, _ret} = Circuits.SPI.transfer(spi, xfdata)
       end
       self
