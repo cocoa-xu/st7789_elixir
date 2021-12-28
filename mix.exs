@@ -4,7 +4,7 @@ defmodule St7789Elixir.MixProject do
   def project do
     [
       app: :st7789_elixir,
-      version: "0.1.3",
+      version: "0.1.4",
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
