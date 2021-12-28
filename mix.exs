@@ -38,8 +38,8 @@ defmodule St7789Elixir.MixProject do
   defp docs() do
     [
       groups_for_functions: [
-        API: & &1[:functions] == :exported,
-        Constants: & &1[:functions] == :constants
+        API: &(&1[:functions] == :exported),
+        Constants: &(&1[:functions] == :constants)
       ]
     ]
   end
