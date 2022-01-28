@@ -41,12 +41,12 @@ disp2 = ST7789.new(port, cs: cs2, backlight: backlight2, dc: dc, speed_hz: speed
 # display it
 ST7789.display(disp1, image_data, :bgr)
 # (optional, for demo only) convert to rgb888 colorspace
-{:ok, mat} = OpenCV.cvtcolor(mat, OpenCV.cv_color_bgr2rgb)
+{:ok, mat} = OpenCV.cvtcolor(mat, OpenCV.cv_COLOR_BGR2RGB)
 {:ok, image_data} = OpenCV.Mat.to_binary(mat)
 ST7789.display(disp2, image_data, :rgb)
 
 # open video stream
-{:ok, cap} = OpenCV.VideoCapture.videocapture(0)
+{:ok, cap} = OpenCV.VideoCapture.videoCapture(0)
 # read a frame
 {:ok, mat} = OpenCV.VideoCapture.read(cap)
 %{height: h, width: w} = ST7789.size(disp1)
