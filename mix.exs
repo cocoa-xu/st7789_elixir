@@ -4,7 +4,7 @@ defmodule St7789Elixir.MixProject do
   def project do
     [
       app: :st7789_elixir,
-      version: "0.1.4",
+      version: "0.1.5",
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -22,10 +22,10 @@ defmodule St7789Elixir.MixProject do
 
   defp deps do
     [
-      {:cvt_color, "~> 0.1.1"},
-      {:circuits_gpio, "~> 0.4"},
-      {:circuits_spi, "~> 0.1"},
-      {:ex_doc, "~> 0.14", only: :dev, runtime: false}
+      {:cvt_color, "~> 0.1.3"},
+      {:circuits_gpio, "~> 1.0"},
+      {:circuits_spi, "~> 1.2"},
+      {:ex_doc, "~> 0.27", only: :dev, runtime: false}
     ]
   end
 
